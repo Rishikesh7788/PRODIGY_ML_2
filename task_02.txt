@@ -1,0 +1,51 @@
+import pandas as pd
+
+dataset_url = 'https://www.kaggle.com/datasets/vjchoudhary/customer-segmentation-tutorial-in-python'
+data = pd.read_csv('Mall_Customers.csv')
+
+data.head()
+print(data.isnull().sum())
+
+data = data.drop(columns=['CustomerID'])
+
+data['Gender'] = data['Gender'].map({'Male': 0, 'Female': 1})
+
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+data_scaled = scaler.fit_transform(data)
+
+data_scaled = pd.DataFrame(data_scaled, columns=data.columns)
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+
+inertia = []
+K = range(1, 11)
+for k in K:
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    kmeans.fit(data_scaled)
+    inertia.append(kmeans.inertia_)
+
+plt.figure(figsize=(8, 4))
+plt.plot(K, inertia, 'bx-')
+plt.xlabel('Number of clusters')
+plt.ylabel('Inertia')
+plt.title('Elbow Method for Optimal k')
+plt.show()
+
+k = 5
+kmeans = KMeans(n_clusters=k, random_state=42)
+kmeans.fit(data_scaled)
+
+data['Cluster'] = kmeans.labels_
+
+data.head()
+import seaborn as sns
+
+plt.figure(figsize=(10, 6))
+sns.scatterplot(data=data, x='Annual Income (k$)', y='Spending Score (1-100)', hue='Cluster', palette='viridis')
+plt.title('Clusters of Customers')
+plt.show()
+
+cluster_analysis = data.groupby('Cluster').mean()
+print(cluster_analysis)
